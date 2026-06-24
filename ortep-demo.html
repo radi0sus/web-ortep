@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>CIFLord ORTEP SVG Prototype</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --text: #1f2933;
+      --muted: #6b7280;
+      --border: #d8dde6;
+      --accent: #2563eb;
+      --accent-soft: #e8f0ff;
+      --radius: 9px;
+      color-scheme: light;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --border: #374151;
+        --accent: #60a5fa;
+        --accent-soft: #1e3a5f;
+        color-scheme: dark;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.35;
+      font-size: 14px;
+    }
+
+    header {
+      padding: 0.8rem 1rem;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.15rem;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr) 360px;
+      gap: 0.8rem;
+      padding: 0.8rem;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.8rem;
+      overflow: auto;
+    }
+
+    .panel + .panel {
+      margin-top: 0.8rem;
+    }
+
+    .override-sidebar {
+      position: sticky;
+      top: 0.8rem;
+      max-height: calc(100vh - 1.6rem);
+      overflow: auto;
+    
+      font-size: 0.82rem;
+    }
+    
+    .override-sidebar h2 {
+      margin-bottom: 0.45rem;
+    }
+    
+    .override-sidebar h3 {
+      margin: 0.75rem 0 0.35rem;
+      font-size: 0.82rem;
+    }
+    
+    .override-sidebar label {
+      font-size: 0.78rem;
+    }
+    
+    .override-sidebar input[type="text"],
+    .override-sidebar select {
+      font-size: 0.78rem;
+      padding: 0.22rem 0.3rem;
+    }
+    
+    .override-sidebar .table {
+      font-size: 0.74rem;
+    }
+    
+    .override-sidebar .table th,
+    .override-sidebar .table td {
+      padding: 0.18rem 0.24rem;
+    }
+    
+    .override-sidebar .table select {
+      min-width: 4.7rem;
+    }
+
+    .selected-panel {
+      margin-bottom: 0.75rem;
+      padding: 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: rgba(127, 127, 127, 0.06);
+    }
+    
+    .selected-panel h3 {
+      margin-top: 0;
+    }
+    
+    .selected-actions {
+      display: grid;
+      gap: 0.35rem;
+      margin-top: 0.45rem;
+    }
+    
+    .selected-actions label {
+      margin: 0;
+    }
+
+    .svg-panel {
+      min-width: 0;
+    }
+
+    h2 {
+      margin: 0 0 0.65rem;
+      font-size: 1rem;
+    }
+
+    h3 {
+      margin: 1rem 0 0.45rem;
+      font-size: 0.9rem;
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.83rem;
+      margin: 0.55rem 0;
+    }
+
+    select,
+    input[type="number"],
+    input[type="text"],
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      margin-top: 0.2rem;
+      padding: 0.32rem 0.4rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--text);
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      padding: 0.35rem 0.6rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    button:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      margin-top: 0.7rem;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .status {
+      margin-top: 0.6rem;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .warning {
+      color: #b45309;
+    }
+
+    .error {
+      color: #dc2626;
+    }
+
+    .svg-box {
+      min-height: 640px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: auto;
+    }
+
+    .svg-box svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #fff;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+      margin-top: 0.5rem;
+    }
+
+    .table th,
+    .table td {
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.35rem;
+      vertical-align: top;
+    }
+
+    .table th {
+      text-align: left;
+      background: rgba(127, 127, 127, 0.08);
+    }
+
+    .number {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 1250px) {
+      main {
+        grid-template-columns: 280px minmax(0, 1fr);
+      }
+    
+      .override-sidebar {
+        grid-column: 1 / -1;
+        position: static;
+        max-height: none;
+      }
+    }
+    
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div>
+      <h1>CIFLord ORTEP SVG Prototype</h1>
+      <div class="subtitle">Static SVG displacement ellipsoid plot · experimental</div>
+    </div>
+    <div class="subtitle">Standalone prototype</div>
+  </header>
+
+  <main>
+    <aside>
+      <section class="panel">
+        <h2>Input</h2>
+
+        <label>
+          CIF file
+          <input id="file-input" type="file" accept=".cif,.txt">
+        </label>
+
+        <div id="load-status" class="status">No CIF loaded.</div>
+      </section>
+
+      <section class="panel">
+        <h2>ORTEP selection</h2>
+      
+        <label>
+          Fragment / moiety
+          <select id="select-component"></select>
+        </label>
+      
+        <label>
+          Start atom
+          <select id="select-center"></select>
+        </label>
+          Probability
+          <select id="select-probability">
+            <option value="30">30%</option>
+            <option value="50" selected>50%</option>
+            <option value="70">70%</option>
+            <option value="90">90%</option>
+          </select>
+        </label>
+
+        <label>
+          Style scale
+          <input id="input-style-scale" type="range" value="1" min="0.1" max="3" step="0.05">
+          <span id="style-scale-value" class="hint">1.00×</span>
+        </label>
+        
+        <label>
+          Max atoms
+          <input id="input-max-atoms" type="number" value="200" min="10" max="2000" step="10">
+        </label>
+
+        <label>
+          Max radius /Å
+          <input id="input-max-radius" type="number" value="20" min="2" max="100" step="1">
+        </label>
+
+        <label>
+          Max expansion depth
+          <input id="input-max-depth" type="number" value="12" min="1" max="50" step="1">
+        </label>
+
+        <label>
+          <input id="opt-show-labels" type="checkbox" checked>
+          Show labels
+        </label>
+
+        <label>
+          <input id="opt-label-c" type="checkbox">
+          Label C atoms
+        </label>
+        
+        <label>
+          <input id="opt-label-h" type="checkbox">
+          Label H atoms
+        </label>
+
+        <label>
+          <input id="opt-show-backfaces" type="checkbox">
+          Show ORTEP backfaces
+        </label>
+
+        <label>
+          <input id="opt-two-colored-bonds" type="checkbox">
+          Two-colored bonds
+        </label>
+
+        <label>
+          <input id="opt-show-h" type="checkbox" checked>
+          Show H atoms
+        </label>
+        
+        <label>
+          <input id="opt-add-missing-h" type="checkbox" checked>
+          Add coordinate H atoms missing from CIF bonds
+        </label>
+       <div class="button-row">
+         <button id="btn-render" type="button" disabled>Render ORTEP</button>
+         <button id="btn-download" type="button" disabled>Download SVG</button>
+         <button id="btn-download-png" type="button" disabled>Download PNG</button>
+       </div>
+
+        <p class="hint">
+          This prototype uses CIF geometry bonds. Symmetry-generated bond partners are included where specified in the CIF bond table.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h2>Fragment</h2>
+        <div id="fragment-info" class="hint">No fragment.</div>
+      </section>
+    </aside>
+
+    <section class="panel svg-panel">
+      <h2>SVG output</h2>
+      <p class="hint">
+        Drag the SVG to rotate the view. Double-click to reset to automatic view.
+        Shortcuts: Shift-click atom = show/hide atom label;
+        Ctrl-click atom or bond = hide atom or bond;
+        Cmd-click atom or bond = hide atom or bond on macOS;
+        Shift+Ctrl/Cmd-click atom = show attached coordinate H atoms.
+        Hidden items can be restored from the override panel.
+      </p>+Ctrl/Cmd-click atom = show attached coordinate H atoms.
+      </p>
+      <div id="svg-output" class="svg-box"></div>
+    </section>
+    
+    <section class="panel override-sidebar">
+      <h2>Manual overrides</h2>
+      
+      <div class="button-row">
+        <button id="btn-show-hidden-atoms" type="button">Show hidden atoms</button>
+        <button id="btn-reset-overrides" type="button">Reset overrides</button>
+      </div>      
+          
+      <section class="selected-panel">
+        <h3>Selected item</h3>
+        <div id="selected-override" class="hint">No atom or bond selected.</div>
+      </section>
+    
+      <label>
+        Search atoms/bonds
+        <input id="override-search" type="text" placeholder="e.g. C1, Ru1, N">
+      </label>
+    
+      <h3>Atoms</h3>
+      <div id="atom-overrides" class="hint">No fragment.</div>
+    
+      <h3>Bonds</h3>
+      <div id="bond-overrides" class="hint">No fragment.</div>
+    </section>
+    
+  </main>
+
+  <script src="static/js/parser.js"></script>
+  <script src="static/js/element-library.js"></script>
+  <script src="static/js/ortep-svg.js"></script>
+  <script src="static/js/ortep-app.js"></script>
+</body>
+</html>
