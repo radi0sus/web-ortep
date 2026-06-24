@@ -67,39 +67,53 @@
     label.textContent = currentStyleScale().toFixed(2) + "×";
   }
 
-  function fillCenterSelect(model, component) {
-    var select = $("select-center");
-    var atoms = component && component.atoms
-      ? component.atoms
-      : (model.atoms || []);
-
-    if (!select) {
-      return;
+  function numericControlValue(id, fallback) {
+    var el = $(id);
+    var value = el ? parseFloat(el.value) : fallback;
+  
+    if (!isFinite(value)) {
+      return fallback;
     }
-
-    atoms = atoms.slice().sort(function (a, b) {
-      var za = atomicNumber(a.element);
-      var zb = atomicNumber(b.element);
-
-      if (za !== zb) {
-        return zb - za;
-      }
-
-      return String(a.label).localeCompare(String(b.label), undefined, {
-        numeric: true,
-        sensitivity: "base"
-      });
-    });
-
-    select.innerHTML = atoms.map(function (atom) {
-      return (
-        "<option value=\"" + escapeHtml(atom.label) + "\">" +
-          escapeHtml(atom.label + " (" + atom.element + ")") +
-        "</option>"
-      );
-    }).join("");
-
-    select.disabled = !atoms.length;
+  
+    return value;
+  }
+  
+  function updateLimitLabels() {
+    var maxAtomsLabel = $("max-atoms-value");
+    var maxRadiusLabel = $("max-radius-value");
+    var maxDepthLabel = $("max-depth-value");
+  
+    if (maxAtomsLabel) {
+      maxAtomsLabel.textContent =
+        String(parseInt(numericControlValue("input-max-atoms", 200), 10));
+    }
+  
+    if (maxRadiusLabel) {
+      maxRadiusLabel.textContent =
+        String(numericControlValue("input-max-radius", 20)) + " Å";
+    }
+  
+    if (maxDepthLabel) {
+      maxDepthLabel.textContent =
+        String(parseInt(numericControlValue("input-max-depth", 12), 10));
+    }
+  }
+  
+  function currentStartLabel(state) {
+    if (!state.model) {
+      return "";
+    }
+  
+    var componentSelect = $("select-component");
+    var component = componentSelect
+      ? componentById(state, componentSelect.value)
+      : null;
+  
+    if (component) {
+      return chooseBestAtomInComponent(component);
+    }
+  
+    return chooseDefaultCenterAtom(state.model);
   }
 
   function atomicNumber(element) {
@@ -813,7 +827,8 @@
       fragment: null,
       viewState: null,
       lastSvg: "",
-
+      sourceFilename: "",
+  
       displayOptions: {
         showHydrogen: true,
         labelCarbon: false,
@@ -821,9 +836,9 @@
         atomOverrides: {},
         bondOverrides: {}
       },
-
+  
       selectedItem: null,
-
+  
       dragging: false,
       dragMoved: false,
       lastMouse: null,
@@ -879,6 +894,74 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }, 0);
+  }
+
+function filenameBase(filename) {
+  filename = String(filename || "").trim();
+
+  if (!filename) {
+    return "ortep";
+  }
+
+  filename = filename.replace(/^.*[\\/]/, "");
+  filename = filename.replace(/\.[^.]*$/, "");
+
+  return filename || "ortep";
+}
+
+function safeFilenamePart(value) {
+  value = String(value || "").trim();
+
+  if (!value) {
+    return "";
+  }
+
+  return value
+    .replace(/[^\w.\-]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+  function currentComponentFilenamePart(state) {
+    var componentSelect = $("select-component");
+  
+    if (!componentSelect || !state.components || !state.components.length) {
+      return "";
+    }
+  
+    var component = componentById(state, componentSelect.value);
+  
+    if (!component) {
+      return "";
+    }
+  
+    /*
+      Keep it short and stable.
+      Example: component_1_Cu2_Br2_N12_C25
+    */
+    var formula = componentFormulaText(component);
+  
+    return safeFilenamePart(
+      "component_" +
+      component.index +
+      (formula ? "_" + formula.replace(/\s+/g, "_") : "")
+    );
+  }
+  
+  function currentExportBaseName(state) {
+    var base = safeFilenamePart(filenameBase(state.sourceFilename));
+  
+    var componentPart = currentComponentFilenamePart(state);
+  
+    if (componentPart) {
+      return base + "_" + componentPart + "_ortep";
+    }
+  
+    if (state.fragment && state.fragment.start) {
+      return base + "_" + safeFilenamePart(state.fragment.start.label) + "_ortep";
+    }
+  
+    return base + "_ortep";
   }
 
   function downloadPngFromSvg(svgText, filename, dpi) {
@@ -991,8 +1074,12 @@
         return;
       }
 
-      var centerLabel = $("select-center").value;
+      var centerLabel = currentStartLabel(state);
       var probability = parseInt($("select-probability").value, 10);
+      
+      if (!centerLabel) {
+        return;
+      }
 
       var fragment = CIFLord.OrtepSvg.makeBondedComponentForAtom(
         state.model,
@@ -1002,9 +1089,9 @@
           addMissingHydrogenAtoms: $("opt-add-missing-h")
             ? $("opt-add-missing-h").checked
             : true,
-          maxAtoms: parseInt($("input-max-atoms").value, 10) || 200,
-          maxRadius: parseFloat($("input-max-radius").value) || 20,
-          maxDepth: parseInt($("input-max-depth").value, 10) || 12
+           maxAtoms: parseInt(numericControlValue("input-max-atoms", 200), 10),
+           maxRadius: numericControlValue("input-max-radius", 20),
+           maxDepth: parseInt(numericControlValue("input-max-depth", 12), 10)
         }
       );
 
@@ -1055,6 +1142,7 @@
             state.fragment = null;
             state.viewState = null;
             state.lastSvg = "";
+            state.sourceFilename = file.name || "";
             state.displayOptions.atomOverrides = {};
             state.displayOptions.bondOverrides = {};
             state.selectedItem = null;
@@ -1063,22 +1151,14 @@
 
             var defaultComponent = chooseDefaultComponent(state.components);
             var componentSelect = $("select-component");
-
+            
             if (componentSelect && defaultComponent) {
               componentSelect.value = defaultComponent.id;
             }
-
-            fillCenterSelect(model, defaultComponent);
-
+            
             var defaultCenter = defaultComponent
               ? chooseBestAtomInComponent(defaultComponent)
               : chooseDefaultCenterAtom(model);
-
-            var centerSelect = $("select-center");
-
-            if (centerSelect && defaultCenter) {
-              centerSelect.value = defaultCenter;
-            }
 
             $("btn-render").disabled = !model.atoms.length;
             $("btn-download").disabled = true;
@@ -1115,22 +1195,22 @@
         if (!state.lastSvg) {
           return;
         }
-
-        var center = $("select-center").value || "ortep";
-
+      
+        var exportBase = currentExportBaseName(state);
+      
         var blob = new Blob([state.lastSvg], {
           type: "image/svg+xml;charset=utf-8"
         });
-
+      
         var url = URL.createObjectURL(blob);
         var a = document.createElement("a");
-
+      
         a.href = url;
-        a.download = center + "_ortep.svg";
-
+        a.download = exportBase + ".svg";
+      
         document.body.appendChild(a);
         a.click();
-
+      
         setTimeout(function () {
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
@@ -1144,11 +1224,11 @@
             return;
           }
 
-          var center = $("select-center").value || "ortep";
-
+          var exportBase = currentExportBaseName(state);
+          
           downloadPngFromSvg(
             state.lastSvg,
-            center + "_ortep_300dpi.png",
+            exportBase + "_300dpi.png",
             300
           );
         });
@@ -1163,21 +1243,7 @@
           if (!state.model) {
             return;
           }
-
-          var component = componentById(state, componentSelect.value);
-
-          fillCenterSelect(state.model, component);
-
-          var center = component
-            ? chooseBestAtomInComponent(component)
-            : chooseDefaultCenterAtom(state.model);
-
-          var centerSelect = $("select-center");
-
-          if (centerSelect && center) {
-            centerSelect.value = center;
-          }
-
+        
           render();
         });
       }
@@ -1223,7 +1289,22 @@
       }
 
       [
-        "select-center",
+        "input-max-atoms",
+        "input-max-radius",
+        "input-max-depth"
+      ].forEach(function (id) {
+        var el = $(id);
+
+        if (!el) {
+          return;
+        }
+
+        el.addEventListener("input", function () {
+          updateLimitLabels();
+        });
+      });
+
+      [
         "opt-add-missing-h",
         "input-max-atoms",
         "input-max-radius",
@@ -1626,6 +1707,7 @@
     }
 
     updateStyleScaleLabel();
+    updateLimitLabels();
     bindFileInput();
     bindButtons();
     bindRenderControls();

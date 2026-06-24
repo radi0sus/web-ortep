@@ -269,6 +269,16 @@
       white-space: nowrap;
     }
 
+    @media (prefers-color-scheme: dark) {
+      .svg-box {
+        background: #020617;
+      }
+
+      .svg-box svg {
+        filter: invert(1) hue-rotate(180deg) saturate(0.9) contrast(0.95);
+      }
+    }
+
     @media (max-width: 1250px) {
       main {
         grid-template-columns: 280px minmax(0, 1fr);
@@ -319,10 +329,6 @@
           <select id="select-component"></select>
         </label>
       
-        <label>
-          Start atom
-          <select id="select-center"></select>
-        </label>
           Probability
           <select id="select-probability">
             <option value="30">30%</option>
@@ -340,17 +346,20 @@
         
         <label>
           Max atoms
-          <input id="input-max-atoms" type="number" value="200" min="10" max="2000" step="10">
+          <input id="input-max-atoms" type="range" value="200" min="10" max="2000" step="10">
+          <span id="max-atoms-value" class="hint">200</span>
         </label>
-
+        
         <label>
           Max radius /Å
-          <input id="input-max-radius" type="number" value="20" min="2" max="100" step="1">
+          <input id="input-max-radius" type="range" value="20" min="2" max="100" step="1">
+          <span id="max-radius-value" class="hint">20 Å</span>
         </label>
-
+        
         <label>
           Max expansion depth
-          <input id="input-max-depth" type="number" value="12" min="1" max="50" step="1">
+          <input id="input-max-depth" type="range" value="14" min="1" max="50" step="1">
+          <span id="max-depth-value" class="hint">12</span>
         </label>
 
         <label>
