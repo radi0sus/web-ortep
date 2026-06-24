@@ -3173,86 +3173,158 @@
           preference: 0
         },
         {
+          name: "ENE",
+          x: right + 4,
+          y: cy - h * 0.45,
+          preference: 1
+        },
+        {
           name: "E",
           x: right,
           y: cy,
-          preference: 1
+          preference: 2
+        },
+        {
+          name: "ESE",
+          x: right + 4,
+          y: cy + h * 0.45,
+          preference: 3
         },
         {
           name: "SE",
           x: right,
           y: bottom,
-          preference: 2
+          preference: 4
+        },
+        {
+          name: "NNE",
+          x: cx + w * 0.25,
+          y: top - 4,
+          preference: 5
         },
         {
           name: "N",
           x: cx,
           y: top,
-          preference: 3
+          preference: 6
+        },
+        {
+          name: "NNW",
+          x: cx - w * 0.25,
+          y: top - 4,
+          preference: 7
+        },
+        {
+          name: "SSE",
+          x: cx + w * 0.25,
+          y: bottom + 4,
+          preference: 8
         },
         {
           name: "S",
           x: cx,
           y: bottom,
-          preference: 4
+          preference: 9
+        },
+        {
+          name: "SSW",
+          x: cx - w * 0.25,
+          y: bottom + 4,
+          preference: 10
         },
         {
           name: "NW",
           x: left,
           y: top,
-          preference: 5
+          preference: 11
+        },
+        {
+          name: "WNW",
+          x: left - 4,
+          y: cy - h * 0.45,
+          preference: 12
         },
         {
           name: "W",
           x: left,
           y: cy,
-          preference: 6
+          preference: 13
+        },
+        {
+          name: "WSW",
+          x: left - 4,
+          y: cy + h * 0.45,
+          preference: 14
         },
         {
           name: "SW",
           x: left,
           y: bottom,
-          preference: 7
+          preference: 15
         },
-
+      
         /*
           Wider fallback ring.
         */
         {
           name: "farNE",
-          x: right + 7,
-          y: top - 4,
-          preference: 8
+          x: right + 9,
+          y: top - 6,
+          preference: 16
+        },
+        {
+          name: "farENE",
+          x: right + 12,
+          y: cy - h * 0.45,
+          preference: 17
         },
         {
           name: "farE",
-          x: right + 8,
+          x: right + 12,
           y: cy,
-          preference: 9
+          preference: 18
+        },
+        {
+          name: "farESE",
+          x: right + 12,
+          y: cy + h * 0.45,
+          preference: 19
         },
         {
           name: "farSE",
-          x: right + 7,
-          y: bottom + 4,
-          preference: 10
+          x: right + 9,
+          y: bottom + 6,
+          preference: 20
         },
         {
           name: "farNW",
-          x: left - 7,
-          y: top - 4,
-          preference: 11
+          x: left - 9,
+          y: top - 6,
+          preference: 21
+        },
+        {
+          name: "farWNW",
+          x: left - 12,
+          y: cy - h * 0.45,
+          preference: 22
         },
         {
           name: "farW",
-          x: left - 8,
+          x: left - 12,
           y: cy,
-          preference: 12
+          preference: 23
+        },
+        {
+          name: "farWSW",
+          x: left - 12,
+          y: cy + h * 0.45,
+          preference: 24
         },
         {
           name: "farSW",
-          x: left - 7,
-          y: bottom + 4,
-          preference: 13
+          x: left - 9,
+          y: bottom + 6,
+          preference: 25
         }
       ];
     }
@@ -3323,7 +3395,7 @@
           /*
             Aesthetic preference.
           */
-          score += cand.preference * 8;
+          score += cand.preference * 5;
 
           /*
             Stay inside SVG.
