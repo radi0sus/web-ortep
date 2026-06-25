@@ -2328,7 +2328,7 @@
     var optimizeLabels = options.optimizeLabels !== false;
     var labelFontSize = options.labelFontSize || 14;
     var labelPadding = options.labelPadding == null ? 2.5 : options.labelPadding;
-    var labelGap = options.labelGap == null ? 0 : options.labelGap;
+    var labelGap = options.labelGap == null ? 4 : options.labelGap;
     
     /*
       Negative value lets labels come closer to the ellipsoid outline.
@@ -3282,6 +3282,21 @@
       var cy = c.y + h * 0.35;
 
       /*
+        These offsets used to be fixed pixel values (4, 6, 9, 12). That
+        works fine at the default font size, but as the font-size slider
+        grows, the label box grows with it while these nudges stayed tiny -
+        so at large font sizes, neighboring compass directions (e.g. NE vs
+        ENE vs E) barely differed and all ended up overlapping the same
+        bond, with no genuinely clear fallback direction left to pick.
+        Scaling them with h (== fontSize) keeps the directional spread
+        proportional to the label size at any zoom level.
+      */
+      var nudge = h * 0.3;
+      var farNudge = h * 0.65;
+      var fartherNudge = h * 0.9;
+      var farVNudge = h * 0.45;
+
+      /*
         Candidate order encodes aesthetic preference.
         NE and E are preferred, but collision score can override.
       */
@@ -3294,7 +3309,7 @@
         },
         {
           name: "ENE",
-          x: right + 4,
+          x: right + nudge,
           y: cy - h * 0.45,
           preference: 1
         },
@@ -3306,7 +3321,7 @@
         },
         {
           name: "ESE",
-          x: right + 4,
+          x: right + nudge,
           y: cy + h * 0.45,
           preference: 3
         },
@@ -3319,7 +3334,7 @@
         {
           name: "NNE",
           x: cx + w * 0.25,
-          y: top - 4,
+          y: top - nudge,
           preference: 5
         },
         {
@@ -3331,13 +3346,13 @@
         {
           name: "NNW",
           x: cx - w * 0.25,
-          y: top - 4,
+          y: top - nudge,
           preference: 7
         },
         {
           name: "SSE",
           x: cx + w * 0.25,
-          y: bottom + 4,
+          y: bottom + nudge,
           preference: 8
         },
         {
@@ -3349,7 +3364,7 @@
         {
           name: "SSW",
           x: cx - w * 0.25,
-          y: bottom + 4,
+          y: bottom + nudge,
           preference: 10
         },
         {
@@ -3360,7 +3375,7 @@
         },
         {
           name: "WNW",
-          x: left - 4,
+          x: left - nudge,
           y: cy - h * 0.45,
           preference: 12
         },
@@ -3372,7 +3387,7 @@
         },
         {
           name: "WSW",
-          x: left - 4,
+          x: left - nudge,
           y: cy + h * 0.45,
           preference: 14
         },
@@ -3388,62 +3403,62 @@
         */
         {
           name: "farNE",
-          x: right + 9,
-          y: top - 6,
+          x: right + farNudge,
+          y: top - farVNudge,
           preference: 16
         },
         {
           name: "farENE",
-          x: right + 12,
+          x: right + fartherNudge,
           y: cy - h * 0.45,
           preference: 17
         },
         {
           name: "farE",
-          x: right + 12,
+          x: right + fartherNudge,
           y: cy,
           preference: 18
         },
         {
           name: "farESE",
-          x: right + 12,
+          x: right + fartherNudge,
           y: cy + h * 0.45,
           preference: 19
         },
         {
           name: "farSE",
-          x: right + 9,
-          y: bottom + 6,
+          x: right + farNudge,
+          y: bottom + farVNudge,
           preference: 20
         },
         {
           name: "farNW",
-          x: left - 9,
-          y: top - 6,
+          x: left - farNudge,
+          y: top - farVNudge,
           preference: 21
         },
         {
           name: "farWNW",
-          x: left - 12,
+          x: left - fartherNudge,
           y: cy - h * 0.45,
           preference: 22
         },
         {
           name: "farW",
-          x: left - 12,
+          x: left - fartherNudge,
           y: cy,
           preference: 23
         },
         {
           name: "farWSW",
-          x: left - 12,
+          x: left - fartherNudge,
           y: cy + h * 0.45,
           preference: 24
         },
         {
           name: "farSW",
-          x: left - 9,
-          y: bottom + 6,
+          x: left - farNudge,
+          y: bottom + farVNudge,
           preference: 25
         }
       ];
