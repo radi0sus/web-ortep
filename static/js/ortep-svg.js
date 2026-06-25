@@ -3761,8 +3761,9 @@
       var override = bondOverrideFor(bond);
       var bondDashed = override.style === "dashed";
       var bondDashArray = bondDashed
-        ? (8 * finalStyleScale).toFixed(2) + " " + (7 * finalStyleScale).toFixed(2)
+        ? (12 * finalStyleScale).toFixed(2) + " " + (10 * finalStyleScale).toFixed(2)
         : "";
+      var bondLineCap = bondDashed ? "butt" : "round";
 
       var paCenter = screenPoint(a.cart);
       var pbCenter = screenPoint(b.cart);
@@ -3837,7 +3838,7 @@
             y2,
             bondColor,
             bondWidth,
-            "round",
+            bondLineCap,
             bondDashArray
           );
       }
@@ -3851,6 +3852,28 @@
         Because near objects are drawn later, a foreground bond's white halo
         cuts through geometry behind it.
       */
+      var bondShadowSvg = bondDashed
+        ? ""
+        : makeLineSvg(
+            (pa.x + bondShadowDx).toFixed(2),
+            (pa.y + bondShadowDy).toFixed(2),
+            (pb.x + bondShadowDx).toFixed(2),
+            (pb.y + bondShadowDy).toFixed(2),
+            bondShadowColor,
+            bondShadowWidth,
+            bondLineCap,
+            ""
+          );
+
+      /*
+        Bond drawing order:
+        1. white halo, wide
+        2. grey slightly offset shadow for solid bonds only
+        3. black/two-colored core bond
+
+        Dashed bonds intentionally skip the grey shadow because the offset
+        shadow can fall into the dash gaps and make the bond look irregular.
+      */
       drawItems.push({
         layer: 10,
         z: (paCenter.z + pbCenter.z) / 2,
@@ -3862,20 +3885,11 @@
             y2,
             bondHaloColor,
             bondHaloWidth,
-            "round",
+            bondLineCap,
             bondDashArray
           ) +
 
-          makeLineSvg(
-            (pa.x + bondShadowDx).toFixed(2),
-            (pa.y + bondShadowDy).toFixed(2),
-            (pb.x + bondShadowDx).toFixed(2),
-            (pb.y + bondShadowDy).toFixed(2),
-            bondShadowColor,
-            bondShadowWidth,
-            "round",
-            bondDashArray
-          ) +
+          bondShadowSvg +
 
           coreBondSvg
       });
