@@ -538,6 +538,11 @@
     );
   }
 
+  function symmetryOperationHtml(operation) {
+    return escapeHtml(operation)
+      .replace(/\b([xyz])\b/g, "<em>$1</em>");
+  }
+
   function renderSymmetryNotes(fragment) {
     var notes = fragment.symmetryNotes || [];
 
@@ -555,7 +560,7 @@
         notes.map(function (note) {
           return (
             "(" + escapeHtml(note.symbol) + ") " +
-            escapeHtml(note.operation || note.code || "")
+            symmetryOperationHtml(note.operation || note.code || "")
           );
         }).join("; ") +
       ".</p>"
@@ -637,16 +642,16 @@
                     "<td>" + escapeHtml(atom.symCode || "id") + "</td>" +
                     "<td>" +
                       "<select data-atom-show=\"" + escapeHtml(atom.key) + "\">" +
-                        "<option value=\"auto\"" + (showValue === "auto" ? " selected" : "") + ">auto</option>" +
                         "<option value=\"yes\"" + (showValue === "yes" ? " selected" : "") + ">show</option>" +
                         "<option value=\"no\"" + (showValue === "no" ? " selected" : "") + ">hide</option>" +
+                        "<option value=\"auto\"" + (showValue === "auto" ? " selected" : "") + ">auto</option>" +
                       "</select>" +
                     "</td>" +
                     "<td>" +
                       "<select data-atom-label=\"" + escapeHtml(atom.key) + "\">" +
+                        "<option value=\"yes\"" + (labelValue === "yes" ? " selected" : "") + ">show</option>" +
+                        "<option value=\"no\"" + (labelValue === "no" ? " selected" : "") + ">hide</option>" +
                         "<option value=\"auto\"" + (labelValue === "auto" ? " selected" : "") + ">auto</option>" +
-                        "<option value=\"yes\"" + (labelValue === "yes" ? " selected" : "") + ">label</option>" +
-                        "<option value=\"no\"" + (labelValue === "no" ? " selected" : "") + ">no</option>" +
                       "</select>" +
                     "</td>" +
                   "</tr>"
@@ -692,9 +697,9 @@
                     "</td>" +
                     "<td>" +
                       "<select data-bond-show=\"" + escapeHtml(key) + "\">" +
-                        "<option value=\"auto\"" + (showValue === "auto" ? " selected" : "") + ">auto</option>" +
                         "<option value=\"yes\"" + (showValue === "yes" ? " selected" : "") + ">show</option>" +
                         "<option value=\"no\"" + (showValue === "no" ? " selected" : "") + ">hide</option>" +
+                        "<option value=\"auto\"" + (showValue === "auto" ? " selected" : "") + ">auto</option>" +
                       "</select>" +
                     "</td>" +
                   "</tr>"
@@ -783,16 +788,16 @@
         "<div class=\"selected-actions\">" +
           "<label>Show" +
             "<select data-selected-atom-show=\"" + escapeHtml(atom.key) + "\">" +
-              "<option value=\"auto\"" + (overrideValue(atomOverride.show) === "auto" ? " selected" : "") + ">auto</option>" +
               "<option value=\"yes\"" + (overrideValue(atomOverride.show) === "yes" ? " selected" : "") + ">show</option>" +
               "<option value=\"no\"" + (overrideValue(atomOverride.show) === "no" ? " selected" : "") + ">hide</option>" +
+              "<option value=\"auto\"" + (overrideValue(atomOverride.show) === "auto" ? " selected" : "") + ">auto</option>" +
             "</select>" +
           "</label>" +
           "<label>Label" +
             "<select data-selected-atom-label=\"" + escapeHtml(atom.key) + "\">" +
+              "<option value=\"yes\"" + (overrideValue(atomOverride.label) === "yes" ? " selected" : "") + ">show</option>" +
+              "<option value=\"no\"" + (overrideValue(atomOverride.label) === "no" ? " selected" : "") + ">hide</option>" +
               "<option value=\"auto\"" + (overrideValue(atomOverride.label) === "auto" ? " selected" : "") + ">auto</option>" +
-              "<option value=\"yes\"" + (overrideValue(atomOverride.label) === "yes" ? " selected" : "") + ">label</option>" +
-              "<option value=\"no\"" + (overrideValue(atomOverride.label) === "no" ? " selected" : "") + ">no label</option>" +
             "</select>" +
           "</label>" +
           (attachedHydrogens.length
@@ -825,9 +830,9 @@
         "<div class=\"selected-actions\">" +
           "<label>Show" +
             "<select data-selected-bond-show=\"" + escapeHtml(state.selectedItem.key) + "\">" +
-              "<option value=\"auto\"" + (overrideValue(bondOverride.show) === "auto" ? " selected" : "") + ">auto</option>" +
               "<option value=\"yes\"" + (overrideValue(bondOverride.show) === "yes" ? " selected" : "") + ">show</option>" +
               "<option value=\"no\"" + (overrideValue(bondOverride.show) === "no" ? " selected" : "") + ">hide</option>" +
+              "<option value=\"auto\"" + (overrideValue(bondOverride.show) === "auto" ? " selected" : "") + ">auto</option>" +
             "</select>" +
           "</label>" +
         "</div>";
@@ -1119,20 +1124,9 @@ function safeFilenamePart(value) {
         model: state.model
       });
 
-      $("fragment-info").innerHTML =
-        "<div><strong>Start atom:</strong> " +
-          atomLabelHtml(fragment.start) +
-        "</div>" +
-        "<div><strong>Atoms:</strong> " + fragment.atoms.length + "</div>" +
-        "<div><strong>Bonds:</strong> " + fragment.bonds.length + "</div>" +
-        (fragment.truncated
-          ? "<p class=\"hint warning\"><strong>Warning:</strong> Fragment expansion was truncated.</p>"
-          : "") +
-        (fragment.messages && fragment.messages.length
-          ? "<p class=\"hint\">" + fragment.messages.map(escapeHtml).join("<br>") + "</p>"
-          : "") +
-        renderSymmetryNotes(fragment) +
-        renderFragmentTable(fragment);
+      if ($("symmetry-notes")) {
+        $("symmetry-notes").innerHTML = renderSymmetryNotes(fragment);
+      }
 
       renderOverrideTables(state);
       renderSelectedOverride(state);
@@ -1176,10 +1170,12 @@ function safeFilenamePart(value) {
               ? chooseBestAtomInComponent(defaultComponent)
               : chooseDefaultCenterAtom(model);
 
-            $("btn-render").disabled = !model.atoms.length;
             $("btn-download").disabled = true;
             $("svg-output").innerHTML = "";
-            $("fragment-info").innerHTML = "No fragment.";
+
+            if ($("symmetry-notes")) {
+              $("symmetry-notes").innerHTML = "";
+            }
 
             renderOverrideTables(state);
             renderSelectedOverride(state);
@@ -1205,7 +1201,6 @@ function safeFilenamePart(value) {
     }
 
     function bindButtons() {
-      $("btn-render").addEventListener("click", render);
 
       $("btn-download").addEventListener("click", function () {
         if (!state.lastSvg) {

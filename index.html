@@ -147,6 +147,31 @@
       margin: 0;
     }
 
+    .override-section {
+      margin-top: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: rgba(127, 127, 127, 0.04);
+      overflow: hidden;
+    }
+
+    .override-section summary {
+      cursor: pointer;
+      padding: 0.45rem 0.55rem;
+      font-weight: 600;
+      font-size: 0.82rem;
+      user-select: none;
+    }
+
+    .override-section summary:hover {
+      background: var(--accent-soft);
+    }
+
+    .override-section > div {
+      padding: 0.45rem 0.55rem 0.55rem;
+      border-top: 1px solid var(--border);
+    }
+
     .svg-panel {
       min-width: 0;
     }
@@ -269,6 +294,20 @@
       white-space: nowrap;
     }
 
+    .symmetry-notes {
+      margin-top: 0.7rem;
+    }
+
+    .symmetry-notes h3 {
+      margin: 0 0 0.25rem;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .symmetry-notes p {
+      margin: 0;
+    }
+
     @media (prefers-color-scheme: dark) {
       .svg-box {
         background: #020617;
@@ -329,6 +368,7 @@
           <select id="select-component"></select>
         </label>
       
+        <label>
           Probability
           <select id="select-probability">
             <option value="30">30%</option>
@@ -403,7 +443,6 @@
           Add coordinate H atoms missing from CIF bonds
         </label>
        <div class="button-row">
-         <button id="btn-render" type="button" disabled>Render ORTEP</button>
          <button id="btn-download" type="button" disabled>Download SVG</button>
          <button id="btn-download-png" type="button" disabled>Download PNG</button>
        </div>
@@ -413,10 +452,6 @@
         </p>
       </section>
 
-      <section class="panel">
-        <h2>Fragment</h2>
-        <div id="fragment-info" class="hint">No fragment.</div>
-      </section>
     </aside>
 
     <section class="panel svg-panel">
@@ -428,9 +463,9 @@
         Cmd-click atom or bond = hide atom or bond on macOS;
         Shift+Ctrl/Cmd-click atom = show attached coordinate H atoms.
         Hidden items can be restored from the override panel.
-      </p>+Ctrl/Cmd-click atom = show attached coordinate H atoms.
       </p>
       <div id="svg-output" class="svg-box"></div>
+      <div id="symmetry-notes" class="symmetry-notes hint"></div>
     </section>
     
     <section class="panel override-sidebar">
@@ -451,11 +486,16 @@
         <input id="override-search" type="text" placeholder="e.g. C1, Ru1, N">
       </label>
     
-      <h3>Atoms</h3>
-      <div id="atom-overrides" class="hint">No fragment.</div>
+      <details class="override-section">
+        <summary>Atoms</summary>
+        <div id="atom-overrides" class="hint">No fragment.</div>
+      </details>
     
-      <h3>Bonds</h3>
-      <div id="bond-overrides" class="hint">No fragment.</div>
+      <details class="override-section">
+        <summary>Bonds</summary>
+        <div id="bond-overrides" class="hint">No fragment.</div>
+      </details>
+      
     </section>
     
   </main>

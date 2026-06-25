@@ -2380,7 +2380,8 @@
       Subtle grey offset underlay.
       Gives bonds a slightly shaded, printed-ORTEP look.
     */
-    var bondShadowColor = options.bondShadowColor || "#9ca3af";
+    //var bondShadowColor = options.bondShadowColor || "#9ca3af";
+    var bondShadowColor = options.bondShadowColor || "#d1d5db";
     var bondShadowWidth = options.bondShadowWidth || 4.4;
     var bondShadowDx = options.bondShadowDx || 0.75;
     var bondShadowDy = options.bondShadowDy || 0.75;
