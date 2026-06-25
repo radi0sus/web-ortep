@@ -2630,14 +2630,16 @@
     bondAtomGap *= finalStyleScale;
 
     /*
-      Labels need a readability floor.
-      Let them scale with the molecule, but do not allow them to become too small
-      for large fragments.
+      Labels are controlled independently by labelFontSize.
+      styleScale should not change label size.
     */
-    labelFontSize = Math.max(15, labelFontSize * finalStyleScale);
-    labelHaloWidth = Math.max(2.8, labelHaloWidth * finalStyleScale);
-    labelPadding = Math.max(2.0, labelPadding * finalStyleScale);
-    labelGap *= finalStyleScale;
+    labelFontSize = Math.max(6, labelFontSize);
+
+    var labelSizeScale = labelFontSize / 14;
+
+    labelHaloWidth = Math.max(1.5, labelHaloWidth * labelSizeScale);
+    labelPadding = Math.max(1.0, labelPadding * labelSizeScale);
+    labelGap *= labelSizeScale;
 
     ellipsoidLineWidth *= finalStyleScale;
     hydrogenEllipsoidLineWidth *= finalStyleScale;

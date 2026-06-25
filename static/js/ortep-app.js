@@ -67,6 +67,21 @@
     label.textContent = currentStyleScale().toFixed(2) + "×";
   }
 
+  function currentLabelFontSize() {
+    return numericControlValue("input-label-font-size", 14);
+  }
+
+  function updateLabelFontSizeLabel() {
+    var label = $("label-font-size-value");
+
+    if (!label) {
+      return;
+    }
+
+    label.textContent =
+      String(parseInt(currentLabelFontSize(), 10));
+  }
+
   function numericControlValue(id, fallback) {
     var el = $(id);
     var value = el ? parseFloat(el.value) : fallback;
@@ -1053,6 +1068,7 @@ function safeFilenamePart(value) {
         probability: probability,
         ellipsoidScale: 1,
         styleScale: currentStyleScale(),
+        labelFontSize: currentLabelFontSize(),
         showLabels: showLabels,
         showBackfaces: showBackfaces,
         twoColoredBonds: twoColoredBonds,
@@ -1282,6 +1298,18 @@ function safeFilenamePart(value) {
         styleScaleInput.addEventListener("input", function () {
           updateStyleScaleLabel();
       
+          if (state.fragment) {
+            renderSvgOnly();
+          }
+        });
+      }
+
+      var labelFontSizeInput = $("input-label-font-size");
+
+      if (labelFontSizeInput) {
+        labelFontSizeInput.addEventListener("input", function () {
+          updateLabelFontSizeLabel();
+
           if (state.fragment) {
             renderSvgOnly();
           }
@@ -1707,6 +1735,7 @@ function safeFilenamePart(value) {
     }
 
     updateStyleScaleLabel();
+    updateLabelFontSizeLabel();
     updateLimitLabels();
     bindFileInput();
     bindButtons();
