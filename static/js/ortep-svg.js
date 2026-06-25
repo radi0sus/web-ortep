@@ -2814,8 +2814,12 @@
       return out;
     }
 
-    function makeLineSvg(x1, y1, x2, y2, stroke, strokeWidth, lineCap) {
+    function makeLineSvg(x1, y1, x2, y2, stroke, strokeWidth, lineCap, dashArray) {
       lineCap = lineCap || "round";
+
+      var dash = dashArray
+        ? " stroke-dasharray=\"" + dashArray + "\""
+        : "";
     
       return "<line x1=\"" + x1 +
         "\" y1=\"" + y1 +
@@ -2823,7 +2827,9 @@
         "\" y2=\"" + y2 +
         "\" stroke=\"" + stroke +
         "\" stroke-width=\"" + strokeWidth +
-        "\" stroke-linecap=\"" + lineCap + "\"/>";
+        "\" stroke-linecap=\"" + lineCap + "\"" +
+        dash +
+        "/>";
     }
     
     function makeBondHitSvg(bond, x1, y1, x2, y2) {
@@ -3752,6 +3758,12 @@
         return;
       }
 
+      var override = bondOverrideFor(bond);
+      var bondDashed = override.style === "dashed";
+      var bondDashArray = bondDashed
+        ? (8 * finalStyleScale).toFixed(2) + " " + (7 * finalStyleScale).toFixed(2)
+        : "";
+
       var paCenter = screenPoint(a.cart);
       var pbCenter = screenPoint(b.cart);
 
@@ -3802,7 +3814,8 @@
             midY,
             colorA,
             bondWidth,
-            "butt"
+            "butt",
+            bondDashArray
           ) +
 
           makeLineSvg(
@@ -3812,7 +3825,8 @@
             y2,
             colorB,
             bondWidth,
-            "butt"
+            "butt",
+            bondDashArray
           );
       } else {
         coreBondSvg =
@@ -3822,7 +3836,9 @@
             x2,
             y2,
             bondColor,
-            bondWidth
+            bondWidth,
+            "round",
+            bondDashArray
           );
       }
 
@@ -3845,7 +3861,9 @@
             x2,
             y2,
             bondHaloColor,
-            bondHaloWidth
+            bondHaloWidth,
+            "round",
+            bondDashArray
           ) +
 
           makeLineSvg(
@@ -3854,7 +3872,9 @@
             (pb.x + bondShadowDx).toFixed(2),
             (pb.y + bondShadowDy).toFixed(2),
             bondShadowColor,
-            bondShadowWidth
+            bondShadowWidth,
+            "round",
+            bondDashArray
           ) +
 
           coreBondSvg

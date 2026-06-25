@@ -512,6 +512,26 @@
     return null;
   }
 
+  function bondStyleValue(value) {
+    if (value === "solid") {
+      return "solid";
+    }
+
+    if (value === "dashed") {
+      return "dashed";
+    }
+
+    return "auto";
+  }
+
+  function bondStyleFromValue(value) {
+    if (value === "solid" || value === "dashed") {
+      return value;
+    }
+
+    return null;
+  }
+
   function displayBondLabel(bond, atomMap) {
     var a = atomMap[bond.atom1Key];
     var b = atomMap[bond.atom2Key];
@@ -892,6 +912,13 @@
               "<option value=\"yes\"" + (overrideValue(bondOverride.show) === "yes" ? " selected" : "") + ">show</option>" +
               "<option value=\"no\"" + (overrideValue(bondOverride.show) === "no" ? " selected" : "") + ">hide</option>" +
               "<option value=\"auto\"" + (overrideValue(bondOverride.show) === "auto" ? " selected" : "") + ">auto</option>" +
+            "</select>" +
+          "</label>" +
+          "<label>Style" +
+            "<select data-selected-bond-style=\"" + escapeHtml(state.selectedItem.key) + "\">" +
+              "<option value=\"solid\"" + (bondStyleValue(bondOverride.style) === "solid" ? " selected" : "") + ">solid</option>" +
+              "<option value=\"dashed\"" + (bondStyleValue(bondOverride.style) === "dashed" ? " selected" : "") + ">dashed</option>" +
+              "<option value=\"auto\"" + (bondStyleValue(bondOverride.style) === "auto" ? " selected" : "") + ">auto</option>" +
             "</select>" +
           "</label>" +
         "</div>";
@@ -1500,6 +1527,21 @@ function safeFilenamePart(value) {
 
           state.displayOptions.bondOverrides[selectedBondKey].show =
             overrideFromValue(target.value);
+
+          renderSvgOnly();
+          renderOverrideTables(state);
+          renderSelectedOverride(state);
+          return;
+        }
+
+        if (target.matches("[data-selected-bond-style]")) {
+          var selectedStyleBondKey = target.getAttribute("data-selected-bond-style");
+
+          state.displayOptions.bondOverrides[selectedStyleBondKey] =
+            state.displayOptions.bondOverrides[selectedStyleBondKey] || {};
+
+          state.displayOptions.bondOverrides[selectedStyleBondKey].style =
+            bondStyleFromValue(target.value);
 
           renderSvgOnly();
           renderOverrideTables(state);
