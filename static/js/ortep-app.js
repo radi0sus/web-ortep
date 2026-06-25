@@ -113,6 +113,34 @@
     }
   }
 
+  function setProjectionScaleFromLastFit(state) {
+    var input = $("input-projection-scale");
+
+    if (!input || !isFinite(state.lastFitScale) || state.lastFitScale <= 0) {
+      return;
+    }
+
+    var value = state.lastFitScale;
+    var min = parseFloat(input.min);
+    var max = parseFloat(input.max);
+    var step = parseFloat(input.step);
+
+    if (isFinite(min)) {
+      value = Math.max(min, value);
+    }
+
+    if (isFinite(max)) {
+      value = Math.min(max, value);
+    }
+
+    if (isFinite(step) && step > 0) {
+      var base = isFinite(min) ? min : 0;
+      value = base + Math.round((value - base) / step) * step;
+    }
+
+    input.value = String(value);
+  }
+
   function numericControlValue(id, fallback) {
     var el = $(id);
     var value = el ? parseFloat(el.value) : fallback;
@@ -879,6 +907,7 @@
       viewState: null,
       lastSvg: "",
       sourceFilename: "",
+      lastFitScale: null,
   
       displayOptions: {
         showHydrogen: true,
@@ -1116,6 +1145,19 @@ function safeFilenamePart(value) {
       state.lastSvg = svg;
 
       $("svg-output").innerHTML = svg;
+
+      var renderedSvg = $("svg-output").querySelector("svg");
+
+      if (renderedSvg && !fixedDrawingScaleEnabled()) {
+        var fitScale = parseFloat(renderedSvg.getAttribute("data-fit-scale"));
+
+        if (isFinite(fitScale) && fitScale > 0) {
+          state.lastFitScale = fitScale;
+          setProjectionScaleFromLastFit(state);
+          updateProjectionScaleControls();
+        }
+      }
+
       $("btn-download").disabled = false;
 
       if ($("btn-download-png")) {
@@ -1348,6 +1390,10 @@ function safeFilenamePart(value) {
 
       if (fixedDrawingScaleInput) {
         fixedDrawingScaleInput.addEventListener("change", function () {
+          if (fixedDrawingScaleInput.checked) {
+            setProjectionScaleFromLastFit(state);
+          }
+
           updateProjectionScaleControls();
 
           if (state.fragment) {

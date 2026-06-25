@@ -3993,7 +3993,9 @@
     var svg =
       "<svg xmlns=\"http://www.w3.org/2000/svg\" " +
       "width=\"" + width + "\" height=\"" + height + "\" " +
-      "viewBox=\"0 0 " + width + " " + height + "\">" +
+      "viewBox=\"0 0 " + width + " " + height + "\" " +
+      "data-fit-scale=\"" + fitScale.toFixed(4) + "\" " +
+      "data-projection-scale=\"" + scale.toFixed(4) + "\">" +
         "<rect x=\"0\" y=\"0\" width=\"100%\" height=\"100%\" fill=\"#ffffff\"/>" +
         "<g>" +
           drawItems.map(function (item) {
