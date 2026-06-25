@@ -3147,6 +3147,124 @@
       };
     }
 
+    /*
+      Precise bond geometry for label collision checks.
+
+      bondVisualBBox() above returns the axis-aligned bounding box of the
+      bond's endpoints. That is a good approximation of the rendered stroke
+      for roughly horizontal/vertical bonds (the bbox is a thin strip), but
+      for diagonal bonds (NE/SE/SW/NW) it balloons into a large square that
+      covers most of the space between the two atoms - far more than the
+      actual thin line. That false-positive area caused label candidates
+      near a diagonally-coordinated atom (e.g. square planar with bonds at
+      45 degrees) to all look "blocked", even directions that never
+      actually cross the bond. The optimizer then picked whatever scored
+      least-bad, which still visibly crossed a bond.
+
+      The functions below test the actual line segment against a label box,
+      so only directions that truly cross (or pass very close to) the
+      rendered bond are penalized.
+    */
+    function bondSegment(bond) {
+      var a = atomByKey[bond.atom1Key];
+      var b = atomByKey[bond.atom2Key];
+
+      if (!a || !b) {
+        return null;
+      }
+
+      return {
+        p1: screenPoint(a.cart),
+        p2: screenPoint(b.cart),
+        halfWidth: Math.max(4, bondHaloWidth * 0.55)
+      };
+    }
+
+    function pointInBBox(p, box) {
+      return p.x >= box.minX && p.x <= box.maxX &&
+        p.y >= box.minY && p.y <= box.maxY;
+    }
+
+    function segmentsIntersect(p1, p2, p3, p4) {
+      function cross(ax, ay, bx, by) {
+        return ax * by - ay * bx;
+      }
+
+      var d1x = p2.x - p1.x, d1y = p2.y - p1.y;
+      var d2x = p4.x - p3.x, d2y = p4.y - p3.y;
+
+      var denom = cross(d1x, d1y, d2x, d2y);
+
+      if (denom === 0) {
+        return false;
+      }
+
+      var t = cross(p3.x - p1.x, p3.y - p1.y, d2x, d2y) / denom;
+      var u = cross(p3.x - p1.x, p3.y - p1.y, d1x, d1y) / denom;
+
+      return t >= 0 && t <= 1 && u >= 0 && u <= 1;
+    }
+
+    function pointToSegmentDistance(p, a, b) {
+      var dx = b.x - a.x;
+      var dy = b.y - a.y;
+      var lenSq = dx * dx + dy * dy;
+
+      var t = lenSq > 0
+        ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq
+        : 0;
+
+      t = Math.max(0, Math.min(1, t));
+
+      var px = a.x + t * dx;
+      var py = a.y + t * dy;
+
+      var ex = p.x - px;
+      var ey = p.y - py;
+
+      return Math.sqrt(ex * ex + ey * ey);
+    }
+
+    /*
+      Returns the minimum distance between a (thin, centerline) bond
+      segment and a label bbox. Returns 0 if the segment actually crosses
+      into the box.
+    */
+    function segmentToBBoxDistance(p1, p2, box) {
+      if (pointInBBox(p1, box) || pointInBBox(p2, box)) {
+        return 0;
+      }
+
+      var corners = [
+        { x: box.minX, y: box.minY },
+        { x: box.maxX, y: box.minY },
+        { x: box.maxX, y: box.maxY },
+        { x: box.minX, y: box.maxY }
+      ];
+
+      var i;
+
+      for (i = 0; i < 4; i++) {
+        var c1 = corners[i];
+        var c2 = corners[(i + 1) % 4];
+
+        if (segmentsIntersect(p1, p2, c1, c2)) {
+          return 0;
+        }
+      }
+
+      var best = Infinity;
+
+      for (i = 0; i < 4; i++) {
+        best = Math.min(best, pointToSegmentDistance(corners[i], p1, p2));
+      }
+
+      best = Math.min(best, pointToSegmentDistance(p1, corners[0], corners[2]));
+      best = Math.min(best, pointToSegmentDistance(p2, corners[0], corners[2]));
+
+      return best;
+    }
+
     function makeLabelCandidates(atom, atomBox, text, fontSize) {
       var c = screenPoint(atom.cart);
       var w = estimateTextWidth(text, fontSize);
@@ -3352,15 +3470,18 @@
       var bondObstacles = [];
 
       visibleBonds.forEach(function (bond) {
-        var b = bondVisualBBox(bond);
+        var seg = bondSegment(bond);
 
-        if (b) {
+        if (seg) {
           bondObstacles.push({
             type: "bond",
-            bbox: b
+            p1: seg.p1,
+            p2: seg.p2,
+            halfWidth: seg.halfWidth
           });
         }
       });
+
 
       /*
         Put labels for front atoms first. That usually gives the visually
@@ -3429,12 +3550,24 @@
 
           /*
             Avoid bonds, but less strictly than atom/label overlaps.
+
+            Uses the actual bond centerline (segment), not its axis-aligned
+            bbox: for diagonal bonds that bbox is much larger than the
+            rendered stroke and falsely "blocks" directions that never
+            really cross the bond (this was the square-planar / NE-SE-SW-NW
+            labelling bug).
           */
           bondObstacles.forEach(function (obs) {
-            var area = bboxOverlapArea(box, obs.bbox);
+            var dist = segmentToBBoxDistance(obs.p1, obs.p2, box);
+            var clearance = obs.halfWidth + 2;
 
-            if (area > 0) {
-              score += area * 8;
+            if (dist < clearance) {
+              /*
+                Crossing (dist === 0) is penalized hardest; near-misses
+                taper off smoothly so the optimizer still prefers "close but
+                clear" over "far but still touching".
+              */
+              score += (clearance - dist) * 60 + (dist === 0 ? 400 : 0);
             }
           });
 
