@@ -2581,10 +2581,30 @@
       bbox.maxY = bbox.minY + 1;
     }
 
-    var scale = Math.min(
+    var fitScale = Math.min(
       (width - 2 * margin) / bbox.width,
       (height - 2 * margin) / bbox.height
     );
+
+    /*
+      Projection scale:
+      - default: auto-fit molecule into the fixed SVG canvas
+      - fixedDrawingScale: use user-defined px/Å scale while keeping
+        the SVG canvas size unchanged.
+
+      In fixed mode, smaller moieties naturally get more white space and
+      larger moieties may approach or exceed the canvas boundary. This is
+      intentional for comparable figures.
+    */
+    var scale = fitScale;
+
+    if (options.fixedDrawingScale === true) {
+      var requestedScale = Number(options.projectionScale);
+
+      if (isFinite(requestedScale) && requestedScale > 0) {
+        scale = requestedScale;
+      }
+    }
 
     /*
       Automatic style scaling.

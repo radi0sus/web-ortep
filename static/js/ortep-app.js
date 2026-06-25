@@ -82,6 +82,37 @@
       String(parseInt(currentLabelFontSize(), 10));
   }
 
+  function fixedDrawingScaleEnabled() {
+    var input = $("opt-fixed-drawing-scale");
+
+    return input ? input.checked : false;
+  }
+
+  function currentProjectionScale() {
+    var value = numericControlValue("input-projection-scale", 80);
+
+    if (value < 1) {
+      value = 80;
+    }
+
+    return value;
+  }
+
+  function updateProjectionScaleControls() {
+    var input = $("input-projection-scale");
+    var label = $("projection-scale-value");
+    var enabled = fixedDrawingScaleEnabled();
+
+    if (input) {
+      input.disabled = !enabled;
+    }
+
+    if (label) {
+      label.textContent =
+        String(parseInt(currentProjectionScale(), 10)) + " px/Å";
+    }
+  }
+
   function numericControlValue(id, fallback) {
     var el = $(id);
     var value = el ? parseFloat(el.value) : fallback;
@@ -1073,6 +1104,8 @@ function safeFilenamePart(value) {
         probability: probability,
         ellipsoidScale: 1,
         styleScale: currentStyleScale(),
+        fixedDrawingScale: fixedDrawingScaleEnabled(),
+        projectionScale: currentProjectionScale(),
         labelFontSize: currentLabelFontSize(),
         showLabels: showLabels,
         showBackfaces: showBackfaces,
@@ -1304,6 +1337,30 @@ function safeFilenamePart(value) {
       if (labelFontSizeInput) {
         labelFontSizeInput.addEventListener("input", function () {
           updateLabelFontSizeLabel();
+
+          if (state.fragment) {
+            renderSvgOnly();
+          }
+        });
+      }
+
+      var fixedDrawingScaleInput = $("opt-fixed-drawing-scale");
+
+      if (fixedDrawingScaleInput) {
+        fixedDrawingScaleInput.addEventListener("change", function () {
+          updateProjectionScaleControls();
+
+          if (state.fragment) {
+            renderSvgOnly();
+          }
+        });
+      }
+
+      var projectionScaleInput = $("input-projection-scale");
+
+      if (projectionScaleInput) {
+        projectionScaleInput.addEventListener("input", function () {
+          updateProjectionScaleControls();
 
           if (state.fragment) {
             renderSvgOnly();
@@ -1731,6 +1788,7 @@ function safeFilenamePart(value) {
 
     updateStyleScaleLabel();
     updateLabelFontSizeLabel();
+    updateProjectionScaleControls();
     updateLimitLabels();
     bindFileInput();
     bindButtons();
