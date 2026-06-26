@@ -206,9 +206,9 @@
     C: {
       stroke: "#111111",
       fill: "#ffffff",
-      ellipsoidWidth: 1.45,
+      ellipsoidWidth: 1.75,
       fallbackRadius: 0.14,
-      fallbackStrokeWidth: 1.35,
+      fallbackStrokeWidth: 1.75,
       labelColor: "#111111",
 
       /*
